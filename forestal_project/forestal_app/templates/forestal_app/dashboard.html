@@ -1,0 +1,11 @@
+<h2>Dashboard</h2>
+<a href="{% url 'registro_postura' %}">Registrar postura</a>
+<a href="{% url 'registro_especie' %}">Registrar especie</a>
+<a href="{% url 'ver_mapa' %}">Ver mapa</a>
+<a href="{% url 'logout' %}" class="btn btn-outline-danger">Cerrar sesión</a>
+
+<ul>
+  {% for p in posturas %}
+    <li>{{ p.id }} - {{ p.especie }} - {{ p.estado }}</li>
+  {% endfor %}
+</ul>

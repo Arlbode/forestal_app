@@ -1,0 +1,70 @@
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Listado de Posturas</h1>
+        <div class="btn-group" role="group">
+            <a href="?orden=estado" class="btn btn-{% if orden_actual == 'estado' %}primary{% else %}outline-primary{% endif %}">
+                Ordenar por Estado
+            </a>
+            <a href="?orden=fecha" class="btn btn-{% if orden_actual == 'fecha' %}primary{% else %}outline-primary{% endif %}">
+                Ordenar por Fecha
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Especie</th>
+                    <th>Estado</th>
+                    <th>Ubicación</th>
+                    <th>Fecha Siembra</th>
+                    <th>Responsable</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for postura in posturas %}
+                <tr>
+                    <td>{{ postura.id }}</td>
+                    <td>
+                        {{ postura.especie.nombre_comun }}<br>
+                        <small class="text-muted">{{ postura.especie.nombre_cientifico }}</small>
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if postura.estado == 'Adquirida' %}bg-success
+                            {% elif postura.estado == 'En Transporte' %}bg-warning text-dark
+                            {% elif postura.estado == 'Almacenada' %}bg-info
+                            {% else %}bg-danger
+                            {% endif %}">
+                            {{ postura.estado }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="https://maps.google.com/?q={{ postura.latitud }},{{ postura.longitud }}" 
+                           target="_blank" class="text-decoration-none">
+                            {{ postura.latitud|floatformat:4 }}, {{ postura.longitud|floatformat:4 }}
+                            <i class="bi bi-geo-alt-fill ms-1"></i>
+                        </a>
+                    </td>
+                    <td>
+                        {% if postura.fecha_siembra %}
+                            {{ postura.fecha_siembra|date:"d/m/Y" }}
+                        {% else %}
+                            <span class="text-muted">No sembrada</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ postura.responsable.get_full_name|default:postura.responsable.username }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No hay posturas registradas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

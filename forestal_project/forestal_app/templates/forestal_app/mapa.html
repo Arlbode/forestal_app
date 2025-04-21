@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mapa de Posturas Forestales</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    #map-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    #map {
+      flex-grow: 1;
+    }
+    .leaflet-popup-content {
+      min-width: 200px;
+    }
+    .leaflet-popup-content h3 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .custom-icon {
+      background: none;
+      border: none;
+    }
+    .legend {
+      padding: 10px;
+      background: white;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      line-height: 1.5;
+    }
+    .legend h4 {
+      margin: 0 0 10px;
+    }
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div id="map-container">
+    <div id="header">
+      <h2>Mapa de Posturas Forestales</h2>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    // Inicializar el mapa centrado en las coordenadas promedio
+    var map = L.map('map').setView([{{ posturas.0.latitud|default:"0" }}, {{ posturas.0.longitud|default:"0" }}], 6);
+
+    // Añadir capa de OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Crear iconos personalizados por estado
+    function getIconForEstado(estado) {
+      var iconColor;
+      switch(estado) {
+        case 'Adquirida': iconColor = '#2ecc71'; break;
+        case 'En Transporte': iconColor = '#f39c12'; break;
+        case 'Almacenada': iconColor = '#3498db'; break;
+        case 'Sembrada': iconColor = '#e74c3c'; break;
+        default: iconColor = '#95a5a6';
+      }
+      
+      return L.divIcon({
+        className: 'custom-icon',
+        html: `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                 <path fill="${iconColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+               </svg>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 24]
+      });
+    }
+
+    // Añadir marcadores para cada postura
+    {% for p in posturas %}
+      var marker = L.marker([{{ p.latitud }}, {{ p.longitud }}], {
+        icon: getIconForEstado("{{ p.estado }}")
+      }).bindPopup(`
+        <h3>Postura #{{ p.id }}</h3>
+        <p><strong>Especie:</strong> {{ p.especie.nombre_comun }} ({{ p.especie.nombre_cientifico }})</p>
+        <p><strong>Estado:</strong> <span style="color: ${getIconForEstado("{{ p.estado }}").options.html.match(/fill="([^"]*)"/)[1]}">{{ p.estado }}</span></p>
+        <p><strong>Fecha siembra:</strong> {% if p.fecha_siembra %}{{ p.fecha_siembra|date:"d/m/Y" }}{% else %}No sembrada{% endif %}</p>
+        <p><strong>Responsable:</strong> {% if p.responsable %}{{ p.responsable.get_full_name|default:p.responsable.username }}{% else %}Sin asignar{% endif %}</p>
+        <a href="/posturas/{{ p.id }}/" class="btn btn-primary" style="display: block; text-align: center; margin-top: 10px; padding: 5px; background: #3498db; color: white; text-decoration: none; border-radius: 3px;">
+          Ver detalles completos
+        </a>
+      `).addTo(map);
+      
+      // Opcional: Añadir evento de clic para centrar el mapa
+      marker.on('click', function(e) {
+        map.setView(e.latlng, map.getZoom());
+      });
+    {% endfor %}
+
+    // Añadir leyenda
+    var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function(map) {
+      var div = L.DomUtil.create('div', 'legend');
+      div.innerHTML = `
+        <h4>Leyenda</h4>
+        <div><i style="background:#2ecc71"></i> Adquirida</div>
+        <div><i style="background:#f39c12"></i> En Transporte</div>
+        <div><i style="background:#3498db"></i> Almacenada</div>
+        <div><i style="background:#e74c3c"></i> Sembrada</div>
+      `;
+      return div;
+    };
+    legend.addTo(map);
+
+    // Ajustar el zoom para mostrar todos los marcadores si hay posturas
+    {% if posturas %}
+      var featureGroup = L.featureGroup();
+      {% for p in posturas %}
+        featureGroup.addLayer(L.marker([{{ p.latitud }}, {{ p.longitud }}]));
+      {% endfor %}
+      map.fitBounds(featureGroup.getBounds().pad(0.2));
+    {% endif %}
+  </script>
+</body>
+</html>
