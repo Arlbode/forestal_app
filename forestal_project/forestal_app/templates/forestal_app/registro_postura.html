@@ -1,8 +1,9 @@
-{% extends 'base.html' %}
-{% load static %}
-{% block title %}Registro de Posturas{% endblock %}
-{% block content %}
+{% extends 'base.html' %} 
+{% load crispy_forms_tags %}
 
+{% block title %}Registro de Posturas{% endblock %}
+
+{% block content %}
 <div class="container mt-5">
     <div class="card shadow p-4">
         <h3 class="text-center mb-4">Registro de Postura</h3>
@@ -22,42 +23,30 @@
 
         <form method="post">
             {% csrf_token %}
-
-            <div class="row g-3">
+            
+            <div class="row g-4">
                 <div class="col-md-6">
-                    <label for="{{ form.especie.id_for_label }}" class="form-label">Especie</label>
-                    {{ form.especie }}
+                    {{ form.especie|as_crispy_field }}
                 </div>
-
                 <div class="col-md-6">
-                    <label for="{{ form.fecha_adquisicion.id_for_label }}" class="form-label">Fecha de adquisición</label>
-                    {{ form.fecha_adquisicion }}
+                    {{ form.fecha_adquisicion|as_crispy_field }}
                 </div>
-
                 <div class="col-md-6">
-                    <label for="{{ form.fecha_siembra.id_for_label }}" class="form-label">Fecha de siembra</label>
-                    {{ form.fecha_siembra }}
+                    {{ form.fecha_siembra|as_crispy_field }}
                 </div>
-
-                <div class="col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-start">
-                    <div class="me-md-2 flex-fill">
-                        <label for="{{ form.latitud.id_for_label }}" class="form-label">Latitud</label>
-                        {{ form.latitud }}
-                    </div>
-                    <div class="ms-md-2 flex-fill">
-                        <label for="{{ form.longitud.id_for_label }}" class="form-label">Longitud</label>
-                        {{ form.longitud }}
-                    </div>
+                <div class="col-md-6">
+                    {{ form.estado|as_crispy_field }}
                 </div>
-
-                <div class="col-md-12">
-                    <label for="{{ form.estado.id_for_label }}" class="form-label">Estado de la postura</label>
-                    {{ form.estado }}
+                <div class="col-md-6">
+                    {{ form.latitud|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.longitud|as_crispy_field }}
                 </div>
             </div>
 
             <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-success">Registrar postura</button>
+                <button type="submit" class="btn btn-success btn-lg">Registrar postura</button>
             </div>
         </form>
 
@@ -67,4 +56,22 @@
     </div>
 </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const latField = document.getElementById("id_latitud");
+            const lonField = document.getElementById("id_longitud");
+            if (latField && lonField) {
+                latField.value = position.coords.latitude.toFixed(6);
+                lonField.value = position.coords.longitude.toFixed(6);
+            }
+        }, function(error) {
+            console.error("Error al obtener la ubicación:", error.message);
+        });
+    } else {
+        console.warn("Este navegador no soporta la geolocalización.");
+    }
+});
+</script>
 {% endblock %}

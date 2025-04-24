@@ -13,7 +13,7 @@
         </div>
 
         <div class="card-body">
-            <form method="post">
+            <form method="post" id="posturaForm">
                 {% csrf_token %}
                 {{ form|crispy }}
 
@@ -29,4 +29,46 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Función para obtener la geolocalización del usuario
+    function obtenerGeolocalizacion() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    var latitud = position.coords.latitude;
+                    var longitud = position.coords.longitude;
+                    var precision = position.coords.accuracy;
+    
+                    // Asignar valores al formulario
+                    document.getElementById('id_latitud').value = latitud.toFixed(6);
+                    document.getElementById('id_longitud').value = longitud.toFixed(6);
+    
+                    // Mostrar precisión en consola
+                    console.log("Precisión estimada: " + precision + " metros");
+    
+                    // Mostrar en pantalla (opcional)
+                    const mensaje = "Ubicación detectada con precisión de aproximadamente " + precision.toFixed(1) + " metros.";
+                    const contenedor = document.getElementById("mensaje-precision");
+                    if (contenedor) contenedor.innerText = mensaje;
+                },
+                function(error) {
+                    console.error("Error al obtener la ubicación: " + error.message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,      // tiempo máximo para obtener ubicación
+                    maximumAge: 0        // no usar ubicación en caché
+                }
+            );
+        } else {
+            alert("La geolocalización no está soportada en este navegador.");
+        }
+    }
+
+    // Llamar a la función para obtener la geolocalización cuando se cargue la página
+    window.onload = obtenerGeolocalizacion;
+</script>
+
 {% endblock %}
+

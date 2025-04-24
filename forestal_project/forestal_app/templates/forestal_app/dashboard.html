@@ -4,26 +4,64 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Dashboard</h2>
+<div class="container bg-white rounded shadow p-4 mb-4">
+  <h2 class="text-center mb-4">Dashboard</h2>
 
-<!-- Enlaces de navegación -->
-<div class="mb-4">
-    <a href="{% url 'registro_postura' %}" class="btn btn-success mb-2">Registrar postura</a>
-    <a href="{% url 'registrar_especie' %}" class="btn btn-primary mb-2">Registrar especie</a>
-    <a href="{% url 'mapa_posturas' %}" class="btn btn-info mb-2">Ver mapa</a>
-    <a href="{% url 'listar_posturas' %}" class="btn btn-warning mb-2">Listado actual de posturas</a>    
+  <!-- Enlaces de navegación -->
+  <div class="row gy-2 gx-3 justify-content-center mb-4">
+    <div class="col-12 col-sm-auto">
+      <a href="{% url 'registro_postura' %}" class="btn btn-success w-100">Registrar postura</a>
+    </div>
+    <div class="col-12 col-sm-auto">
+      <a href="{% url 'registrar_especie' %}" class="btn btn-primary w-100">Registrar especie</a>
+    </div>
+    <div class="col-12 col-sm-auto">
+      <a href="{% url 'mapa_posturas' %}" class="btn btn-info w-100">Ver mapa</a>
+    </div>
+    <div class="col-12 col-sm-auto">
+      <a href="{% url 'listar_posturas' %}" class="btn btn-warning w-100">Listado actual de posturas</a>
+    </div>
+  </div>
+
+  <!-- Lista de posturas -->
+  <div class="bg-white rounded shadow p-3">
+    <h3 class="mb-3">Posturas Registradas:</h3>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle text-nowrap">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Especie</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in posturas %}
+          <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.especie }}</td>
+            <td>
+              <span class="badge 
+                {% if p.estado == 'Adquirida' %}bg-success
+                {% elif p.estado == 'En Transporte' %}bg-warning text-dark
+                {% elif p.estado == 'Almacenada' %}bg-info
+                {% elif p.estado == 'Sembrada' %}bg-danger
+                {% else %}bg-secondary
+                {% endif %}">
+                {{ p.estado }}
+              </span>
+            </td>
+            <td>
+              <a href="{% url 'detalle_postura' p.id %}" class="btn btn-info btn-sm">
+                <i class="bi bi-eye"></i> Ver detalles
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
-
-<!-- Lista de posturas -->
-<h3>Posturas Registradas:</h3>
-<ul class="list-group">
-  {% for p in posturas %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        {{ p.id }} - {{ p.especie }} - {{ p.estado }}
-        <!-- Botón de detalle de postura -->
-        <a href="{% url 'detalle_postura' p.id %}" class="btn btn-info btn-sm">Ver detalles</a>
-    </li>
-  {% endfor %}
-</ul>
-
 {% endblock %}

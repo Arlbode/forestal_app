@@ -8,6 +8,7 @@ from django.db.models import Case, When, Value, IntegerField, Avg
 import json
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from django.contrib.auth.models import User
 
 
 from .models import Postura, EscaneoPostura
@@ -68,11 +69,11 @@ def registro_postura(request):
             postura = form.save(commit=False)
             postura.responsable = request.user
             postura.save()
-            return redirect('dashboard')
+            return redirect('listar_posturas')
     else:
         form = PosturaForm()
     return render(request, 'forestal_app/registro_postura.html', {'form': form})
-
+    
 
 @login_required
 def editar_postura(request, id):
@@ -91,8 +92,13 @@ def editar_postura(request, id):
             postura_editada.responsable = request.user
             postura_editada.save()
 
-            if estado_anterior != postura_editada.estado:
-                postura_editada.guardar_historial_estado(postura_editada.estado, request.user)
+        if estado_anterior != postura_editada.estado:
+            postura_editada.guardar_historial_estado(
+                postura_editada.estado,
+                request.user,
+                latitud=postura_editada.latitud,
+                longitud=postura_editada.longitud
+            )
 
             return redirect('detalle_postura', id=postura.id)
     else:
@@ -102,9 +108,15 @@ def editar_postura(request, id):
 
 
 @login_required
+@login_required
 def listar_posturas(request):
     orden = request.GET.get('orden', '')
-    posturas = Postura.objects.all()
+    filtro_responsable = request.GET.get('responsable', '')
+    
+    posturas = Postura.objects.select_related('responsable').all()
+
+    if filtro_responsable:
+        posturas = posturas.filter(responsable__id=filtro_responsable)
 
     if orden == 'estado':
         orden_custom = {
@@ -118,16 +130,30 @@ def listar_posturas(request):
                 *[When(estado=estado, then=Value(orden_valor)) for estado, orden_valor in orden_custom.items()],
                 default=Value(5),
                 output_field=IntegerField()
-            )
+            ),
+            'responsable__username'
         )
     elif orden == 'fecha':
-        posturas = posturas.order_by('-fecha_adquisicion')
+        posturas = posturas.order_by('-fecha_adquisicion', 'responsable__username')
+    else:
+        posturas = posturas.order_by('responsable__username')
+
+    # Agrupación por responsable
+    from itertools import groupby
+    from operator import attrgetter
+
+    posturas_agrupadas = {}
+    for responsable, grupo in groupby(posturas, key=attrgetter('responsable')):
+        posturas_agrupadas[responsable] = list(grupo)
+
+    responsables = User.objects.filter(postura__isnull=False).distinct()
 
     return render(request, 'forestal_app/listar_posturas.html', {
-        'posturas': posturas,
-        'orden_actual': orden
+        'posturas_agrupadas': posturas_agrupadas,
+        'orden_actual': orden,
+        'responsables': responsables,
+        'responsable_seleccionado': filtro_responsable
     })
-
 
 @login_required
 def detalle_postura(request, id):
@@ -153,9 +179,15 @@ def registrar_especie(request):
 
 @login_required
 def mapa_posturas(request):
-    posturas = Postura.objects.exclude(latitud__isnull=True).exclude(longitud__isnull=True)
+    responsable_id = request.GET.get('responsable', '')
+    responsables = User.objects.filter(postura__isnull=False).distinct()
 
-    centro_mapa = [8.1, -80.98333]  # Default en Veraguas
+    posturas = Postura.objects.select_related('especie', 'responsable')
+    if responsable_id:
+        posturas = posturas.filter(responsable__id=responsable_id)
+
+    # Centrado por defecto (puedes ajustar a un punto central más dinámico si lo deseas)
+    centro_mapa = [8.1, -81.0]  # Panamá por ejemplo
     if posturas.exists():
         centro_mapa = [
             posturas.aggregate(avg=Avg('latitud'))['avg'],
@@ -164,9 +196,10 @@ def mapa_posturas(request):
 
     return render(request, 'forestal_app/mapa.html', {
         'posturas': posturas,
-        'centro_mapa': centro_mapa
+        'responsables': responsables,
+        'responsable_seleccionado': responsable_id,
+        'centro_mapa': centro_mapa,
     })
-
 
 # ----------- ESCANEOS -----------
 

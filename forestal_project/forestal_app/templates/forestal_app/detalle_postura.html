@@ -4,11 +4,11 @@
 {% block title %}Detalles de Postura{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
     <div class="card shadow-lg border-0 rounded-4">
         <div class="card-header bg-success text-white rounded-top-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mb-0">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <h2 class="mb-2 mb-md-0">
                     <i class="bi bi-tree-fill me-2"></i>Postura #{{ postura.id }}
                 </h2>
                 <a href="{% url 'listar_posturas' %}" class="btn btn-outline-light btn-sm">
@@ -18,54 +18,45 @@
         </div>
 
         <div class="card-body">
-            <div class="row">
+            <div class="row gy-4">
                 <!-- Info General -->
-                <div class="col-md-6">
-                    <div class="mb-4">
-                        <h4 class="mb-3 text-success border-bottom pb-2"><i class="bi bi-info-circle"></i> Información</h4>
-
-                        <p><strong>Especie:</strong> {{ postura.especie.nombre_comun }}
-                            <br><small class="text-muted fst-italic">{{ postura.especie.nombre_cientifico }}</small></p>
-
+                <div class="col-lg-6">
+                    <div>
+                        <h4 class="text-success border-bottom pb-2 mb-3"><i class="bi bi-info-circle"></i> Información</h4>
+                        <p><strong>Especie:</strong> {{ postura.especie.nombre_comun }}<br>
+                            <small class="text-muted fst-italic">{{ postura.especie.nombre_cientifico }}</small></p>
                         <p><strong>Estado:</strong>
-                            <span class="badge 
+                            <span class="badge
                                 {% if postura.estado == 'Adquirida' %}bg-success
                                 {% elif postura.estado == 'En Transporte' %}bg-warning text-dark
                                 {% elif postura.estado == 'Almacenada' %}bg-info
                                 {% else %}bg-danger
-                                {% endif %}">{{ postura.estado }}</span>
+                                {% endif %}">
+                                {{ postura.estado }}
+                            </span>
                         </p>
-
                         <p><strong>Fecha de Siembra:</strong>
-                            {% if postura.fecha_siembra %}
-                                {{ postura.fecha_siembra|date:"d/m/Y" }}
-                            {% else %}
-                                <span class="text-muted">No sembrada</span>
-                            {% endif %}
+                            {% if postura.fecha_siembra %}{{ postura.fecha_siembra|date:"d/m/Y" }}
+                            {% else %}<span class="text-muted">No sembrada</span>{% endif %}
                         </p>
-
                         <p><strong>Responsable:</strong>
                             {% if postura.responsable %}
                                 {{ postura.responsable.get_full_name|default:postura.responsable.username }}
-                            {% else %}
-                                <span class="text-muted">Sin asignar</span>
-                            {% endif %}
+                            {% else %}<span class="text-muted">Sin asignar</span>{% endif %}
                         </p>
                     </div>
 
-                    <div class="mb-4">
-                        <h4 class="mb-3 text-success border-bottom pb-2"><i class="bi bi-geo-alt"></i> Ubicación</h4>
-                        <p><strong>Coordenadas:</strong>
-                            {{ postura.latitud|floatformat:6 }}, {{ postura.longitud|floatformat:6 }}</p>
-                        <a href="https://maps.google.com/?q={{ postura.latitud }},{{ postura.longitud }}"
-                           target="_blank" class="btn btn-outline-primary btn-sm">
+                    <div class="mt-4">
+                        <h4 class="text-success border-bottom pb-2 mb-3"><i class="bi bi-geo-alt"></i> Ubicación</h4>
+                        <p><strong>Coordenadas:</strong> {{ postura.latitud|floatformat:6 }}, {{ postura.longitud|floatformat:6 }}</p>
+                        <a href="https://maps.google.com/?q={{ postura.latitud }},{{ postura.longitud }}" target="_blank" class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-map"></i> Ver en Google Maps
                         </a>
                     </div>
                 </div>
 
                 <!-- Mapa -->
-                <div class="col-md-6">
+                <div class="col-lg-6">
                     <div class="border rounded ratio ratio-4x3">
                         <iframe
                             src="https://maps.google.com/maps?q={{ postura.latitud }},{{ postura.longitud }}&z=15&output=embed"
@@ -104,6 +95,7 @@
                                         <th>Fecha de Cambio</th>
                                         <th>Estado</th>
                                         <th>Modificado por</th>
+                                        <th>Ubicación (Latitud/Longitud)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -112,6 +104,13 @@
                                             <td>{{ historial.fecha_cambio|date:"d/m/Y H:i" }}</td>
                                             <td><span class="badge bg-secondary">{{ historial.estado }}</span></td>
                                             <td>{{ historial.usuario.get_full_name|default:historial.usuario.username }}</td>
+                                            <td>
+                                                <a href="https://maps.google.com/?q={{ historial.latitud }},{{ historial.longitud }}" 
+                                                   target="_blank" class="text-decoration-none">
+                                                    {{ historial.latitud|floatformat:4 }}, {{ historial.longitud|floatformat:4 }}
+                                                    <i class="bi bi-geo-alt-fill ms-1"></i>
+                                                </a>
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -124,7 +123,7 @@
             </div>
 
             <!-- Acciones -->
-            <div class="d-flex justify-content-end mt-4 gap-2 border-top pt-3">
+            <div class="d-flex flex-wrap justify-content-end mt-4 gap-2 border-top pt-3">
                 <a href="{% url 'mapa_posturas' %}" class="btn btn-info">
                     <i class="bi bi-map"></i> Ver en mapa
                 </a>

@@ -22,8 +22,8 @@ class PosturaForm(forms.ModelForm):
             'especie': forms.Select(attrs={'class': 'form-select'}),
             'fecha_adquisicion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'fecha_siembra': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'latitud': forms.NumberInput(attrs={'class': 'form-control'}),
-            'longitud': forms.NumberInput(attrs={'class': 'form-control'}),
+            'latitud': forms.NumberInput(attrs={'class': 'form-control', 'type': 'hidden'}),
+            'longitud': forms.NumberInput(attrs={'class': 'form-control', 'type': 'hidden'}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
 

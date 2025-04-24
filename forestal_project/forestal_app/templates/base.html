@@ -28,6 +28,7 @@
         }
         .navbar .btn {
             margin-left: .5rem;
+            
         }
         footer {
             background: rgba(255,255,255,0.8);
@@ -62,8 +63,12 @@
                         <a class="nav-link" href="{% url 'registro_postura' %}"><i class="bi bi-plus-circle me-1"></i>Registrar</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'escanear_postura' %}"><i class="bi bi-qr-code-scan me-1"></i>Escanear postura</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'exportar_posturas_pdf' %}"><i class="bi bi-download me-1"></i>Generar informe</a>
                     </li>
+
                 </ul>
                 <div class="d-flex">
                     {% if user.is_authenticated %}
