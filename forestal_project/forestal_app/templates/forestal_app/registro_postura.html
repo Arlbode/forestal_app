@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Registrar Postura</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Registro de Posturas{% endblock %}
+{% block content %}
 
 <div class="container mt-5">
     <div class="card shadow p-4">
@@ -33,18 +30,24 @@
                 </div>
 
                 <div class="col-md-6">
+                    <label for="{{ form.fecha_adquisicion.id_for_label }}" class="form-label">Fecha de adquisición</label>
+                    {{ form.fecha_adquisicion }}
+                </div>
+
+                <div class="col-md-6">
                     <label for="{{ form.fecha_siembra.id_for_label }}" class="form-label">Fecha de siembra</label>
                     {{ form.fecha_siembra }}
                 </div>
 
-                <div class="col-md-6">
-                    <label for="{{ form.latitud.id_for_label }}" class="form-label">Latitud</label>
-                    {{ form.latitud }}
-                </div>
-
-                <div class="col-md-6">
-                    <label for="{{ form.longitud.id_for_label }}" class="form-label">Longitud</label>
-                    {{ form.longitud }}
+                <div class="col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-start">
+                    <div class="me-md-2 flex-fill">
+                        <label for="{{ form.latitud.id_for_label }}" class="form-label">Latitud</label>
+                        {{ form.latitud }}
+                    </div>
+                    <div class="ms-md-2 flex-fill">
+                        <label for="{{ form.longitud.id_for_label }}" class="form-label">Longitud</label>
+                        {{ form.longitud }}
+                    </div>
                 </div>
 
                 <div class="col-md-12">
@@ -64,5 +67,4 @@
     </div>
 </div>
 
-</body>
-</html>
+{% endblock %}

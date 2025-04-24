@@ -1,11 +1,29 @@
-<h2>Dashboard</h2>
-<a href="{% url 'registro_postura' %}">Registrar postura</a>
-<a href="{% url 'registro_especie' %}">Registrar especie</a>
-<a href="{% url 'ver_mapa' %}">Ver mapa</a>
-<a href="{% url 'logout' %}" class="btn btn-outline-danger">Cerrar sesión</a>
+{% extends 'base.html' %}
+{% load static %}
 
-<ul>
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Dashboard</h2>
+
+<!-- Enlaces de navegación -->
+<div class="mb-4">
+    <a href="{% url 'registro_postura' %}" class="btn btn-success mb-2">Registrar postura</a>
+    <a href="{% url 'registrar_especie' %}" class="btn btn-primary mb-2">Registrar especie</a>
+    <a href="{% url 'mapa_posturas' %}" class="btn btn-info mb-2">Ver mapa</a>
+    <a href="{% url 'listar_posturas' %}" class="btn btn-warning mb-2">Listado actual de posturas</a>    
+</div>
+
+<!-- Lista de posturas -->
+<h3>Posturas Registradas:</h3>
+<ul class="list-group">
   {% for p in posturas %}
-    <li>{{ p.id }} - {{ p.especie }} - {{ p.estado }}</li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ p.id }} - {{ p.especie }} - {{ p.estado }}
+        <!-- Botón de detalle de postura -->
+        <a href="{% url 'detalle_postura' p.id %}" class="btn btn-info btn-sm">Ver detalles</a>
+    </li>
   {% endfor %}
 </ul>
+
+{% endblock %}

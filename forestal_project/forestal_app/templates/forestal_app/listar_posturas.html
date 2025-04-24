@@ -1,3 +1,8 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lista de Posturas{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -20,8 +25,11 @@
                     <th>Especie</th>
                     <th>Estado</th>
                     <th>Ubicación</th>
-                    <th>Fecha Siembra</th>
+                    <th>Fecha de adquisición</th>
+                    <th>Fecha de siembra</th>
                     <th>Responsable</th>
+                    <th>QR Code</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -49,6 +57,7 @@
                             <i class="bi bi-geo-alt-fill ms-1"></i>
                         </a>
                     </td>
+                    <td>{{ postura.fecha_adquisicion|date:"d/m/Y" }}</td>
                     <td>
                         {% if postura.fecha_siembra %}
                             {{ postura.fecha_siembra|date:"d/m/Y" }}
@@ -57,10 +66,49 @@
                         {% endif %}
                     </td>
                     <td>{{ postura.responsable.get_full_name|default:postura.responsable.username }}</td>
+                    <td>
+                        {% if postura.qr_code %}
+                        <!-- Botón para abrir modal con QR -->
+                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#qrModal{{ postura.id }}">
+                            <i class="bi bi-qr-code"></i>
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="qrModal{{ postura.id }}" tabindex="-1" aria-labelledby="qrModalLabel{{ postura.id }}" aria-hidden="true">
+                          <div class="modal-dialog modal-sm modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="qrModalLabel{{ postura.id }}">QR Postura #{{ postura.id }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body text-center">
+                                <img src="{{ postura.qr_code.url }}" alt="QR de Postura {{ postura.id }}" class="img-fluid" />
+                                <p class="mt-2 small text-muted">Escanea este código para registrar ubicación</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'detalle_postura' postura.id %}" class="btn btn-info btn-sm">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if request.user == postura.responsable or request.user.is_superuser %}
+                            <a href="{% url 'editar_postura' postura.id %}" class="btn btn-warning btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'escanear_postura' %}" class="btn btn-success btn-sm">
+                                <i class="bi bi-qr-code-scan"></i>
+                            </a>
+                        </div>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center">No hay posturas registradas</td>
+                    <td colspan="9" class="text-center">No hay posturas registradas</td>
                 </tr>
                 {% endfor %}
             </tbody>

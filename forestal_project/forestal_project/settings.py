@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-w@*i+)leit62zkat+%3fi9h2@@ff8pm-vvc7^6huw8k008ag6f
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
+CSRF_TRUSTED_ORIGINS = ['https://bd09-149-40-62-39.ngrok-free.app',]
 
 # Application definition
 
@@ -40,10 +40,15 @@ INSTALLED_APPS = [
     'forestal_app',
     'rest_framework',
     'crispy_forms',
+    'crispy_bootstrap4',
+    'django.contrib.sites',
 ]
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -126,3 +131,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+#para servir en dbug archivos estaticos
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'  # o os.path.join(BASE_DIR, 'media') si estás usando Python <3.9
+
+#para generación de QR en debug y en producción
+SITE_ID = 1

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{# 
+  Para pruebas en laptop sin HTTPS, puedes usar ngrok:
+  $ ngrok http 8000
+  y apuntar tu móvil a la URL HTTPS que ngrok te da. 
+#}
+
+{% block title %}Escanear Postura{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" crossorigin=""/>
+<style>
+  .spinner { border:4px solid rgba(0,0,0,0.1); width:36px; height:36px;
+             border-radius:50%; border-left-color:#4caf50; animation:spin 1s linear infinite; margin:auto; }
+  @keyframes spin { to{transform:rotate(360deg);} }
+  #map { height:250px; width:100%; margin-bottom:1rem; }
+  .fade-in { animation:fadeIn .5s ease-in; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .manual-input { display:none; margin-top:1rem; }
+</style>
+
+<div class="container py-4">
+  <h2><i class="bi bi-qr-code-scan"></i> Escanear Postura</h2>
+  <div id="preview" style="width:100%; max-height:300px;" class="border mb-3"></div>
+  <p id="status" class="text-muted">Apunta la cámara al código QR…</p>
+
+  <div id="loading" class="text-center my-3" style="display:none;">
+    <div class="spinner"></div>
+    <p class="text-secondary">Obteniendo geolocalización…</p>
+  </div>
+
+  <div class="manual-input alert alert-warning">
+    <p>No pudimos obtener tu ubicación automáticamente:</p>
+    <div class="row g-2">
+      <div class="col">
+        <input id="lat-manual" class="form-control form-control-sm" placeholder="Latitud">
+      </div>
+      <div class="col">
+        <input id="lng-manual" class="form-control form-control-sm" placeholder="Longitud">
+      </div>
+      <div class="col-auto">
+        <button id="btn-manual" class="btn btn-sm btn-primary">Registrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="result-card" class="card shadow fade-in" style="display:none;">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Detalle de la Postura</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div id="map"></div>
+          <p><strong>Postura:</strong> <span id="info-post-coords"></span></p>
+          <p><strong>Tu Ubicación:</strong> <span id="info-user-coords"></span></p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>ID:</strong> <span id="info-id"></span></p>
+          <p><strong>Especie:</strong> <span id="info-especie"></span></p>
+          <p><strong>Estado:</strong> <span id="info-estado"></span></p>
+          <p><strong>Responsable:</strong> <span id="info-responsable"></span></p>
+          <p><strong>Adquisición:</strong> <span id="info-fecha-adq"></span></p>
+          <p><strong>Siembra:</strong> <span id="info-fecha-siembra"></span></p>
+          <a href="#" id="btn-ver-detalle" class="btn btn-primary btn-sm mt-2">
+            <i class="bi bi-eye"></i> Ver detalles
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" crossorigin=""></script>
+<script>
+const qrScanner = new Html5QrcodeScanner("preview", { fps:10, qrbox:250 });
+let scannedId, postureCoords;
+
+// Muestra manual-input
+function showManual() {
+  document.getElementById('loading').style.display = 'none';
+  document.querySelector('.manual-input').style.display = 'block';
+}
+
+// Manejar registro con coords manuales
+document.getElementById('btn-manual').onclick = () => {
+  const lat = parseFloat(document.getElementById('lat-manual').value);
+  const lng = parseFloat(document.getElementById('lng-manual').value);
+  if (!isNaN(lat) && !isNaN(lng)) {
+    processScan(scannedId, lat, lng);
+  } else {
+    alert('Ingresa coordenadas válidas.');
+  }
+};
+
+// Una vez obtenida lat/lng del usuario o manual, registrar y luego mostrar
+function processScan(id, userLat, userLng) {
+  fetch("{% url 'registrar_escaneo' %}", {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'X-CSRFToken':'{{ csrf_token }}'
+    },
+    body: JSON.stringify({ postura_id:id, latitud:userLat, longitud:userLng })
+  })
+  .then(()=> fetch(`/api/postura/${id}/`))
+  .then(r=>r.json())
+  .then(data=> showResult(data, userLat, userLng))
+  .catch(()=> alert('Error al registrar o cargar datos.'));
+}
+
+// Muestra mapa y detalles
+function showResult(data, userLat, userLng) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('status').textContent = 'Datos cargados:';
+  document.getElementById('result-card').style.display = 'block';
+
+  // Inicializar Leaflet
+  const map = L.map('map').setView([postureCoords.lat, postureCoords.lng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OSM' }).addTo(map);
+  L.marker([postureCoords.lat, postureCoords.lng]).addTo(map).bindPopup('Postura');
+  L.marker([userLat, userLng],{ color:'blue' }).addTo(map).bindPopup('Tu ubicación');
+
+  // Rellena datos
+  document.getElementById('info-post-coords').textContent = `${postureCoords.lat.toFixed(6)}, ${postureCoords.lng.toFixed(6)}`;
+  document.getElementById('info-user-coords').textContent = `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`;
+
+  document.getElementById('info-id').textContent = data.id;
+  document.getElementById('info-especie').textContent = data.especie;
+  document.getElementById('info-estado').textContent = data.estado;
+  document.getElementById('info-responsable').textContent = data.responsable||'Sin asignar';
+  document.getElementById('info-fecha-adquisicion').textContent = data.fecha_adquisicion||'-';
+  document.getElementById('info-fecha-siembra').textContent = data.fecha_siembra||'-';
+
+  document.getElementById('btn-ver-detalle').href = `{% url 'detalle_postura' 0 %}`.replace('0', data.id);
+}
+
+// Obtener geolocalización
+function tryGeoloc() {
+  document.getElementById('loading').style.display = 'block';
+  if(!navigator.geolocation) { showManual(); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    processScan(scannedId, pos.coords.latitude, pos.coords.longitude);
+  }, err => {
+    showManual();
+  });
+}
+
+// Al decodificar QR
+qrScanner.render(decodedText => {
+  qrScanner.clear();
+  document.getElementById('status').textContent = 'QR detectado. Preparando…';
+  try {
+    const url = new URL(decodedText);
+    scannedId = url.searchParams.get('id');
+    const lat = url.searchParams.get('latitud'), lng = url.searchParams.get('longitud');
+    // Guarda coords de postura para el mapa
+    if(lat && lng) postureCoords = { lat:parseFloat(lat), lng:parseFloat(lng) };
+    // Si el QR no trae coords, pide a API
+    const fetchCoords = lat && lng
+      ? Promise.resolve({ latitud:lat, longitud:lng })
+      : fetch(`/api/postura/${scannedId}/`).then(r=>r.json());
+    fetchCoords.then(d=>{
+      postureCoords = { lat: parseFloat(d.latitud), lng: parseFloat(d.longitud) };
+      tryGeoloc();
+    });
+  } catch {
+    alert('QR inválido.');
+    document.getElementById('status').textContent = 'Apunta la cámara al código QR…';
+  }
+});
+</script>
+{% endblock %}
